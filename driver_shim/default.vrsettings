@@ -1,5 +1,5 @@
 {
-  "driver_aapvr_shim": {
+  "driver_battleaxevr_shim": {
     "loadPriority": 1000
   }
 }

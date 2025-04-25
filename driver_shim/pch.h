@@ -35,8 +35,18 @@
 #include <openvr_driver.h>
 #include <driverlog.h>
 
+#include <detours.h>
+
+#define ENABLE_PSVR2_EYE_TRACKING 0
+#define ENABLE_PIMAX_EYE_TRACKING (!ENABLE_PSVR2_EYE_TRACKING && 1)
+
+#if ENABLE_PSVR2_EYE_TRACKING
+//#include "ipc_client.h"
+//#include "psvr2_gazes.h"
+#endif
+
+#if ENABLE_PIMAX_EYE_TRACKING
 #include <PVR.h>
 #include <PVR_API.h>
 #include <PVR_Interface.h>
-
-#include <detours.h>
+#endif

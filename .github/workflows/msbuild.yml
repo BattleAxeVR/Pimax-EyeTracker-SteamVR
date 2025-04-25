@@ -53,4 +53,4 @@ jobs:
       with:
         name: Symbols
         path: |
-          bin/x64/Release/driver_aapvr_shim.pdb
+          bin/x64/Release/driver_battleaxevr_shim.pdb

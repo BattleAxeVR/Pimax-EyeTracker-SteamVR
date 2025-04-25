@@ -93,7 +93,12 @@ namespace driver_shim {
         if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                                (LPCSTR)returnAddress,
                                &callerModule)) {
+
+#if ENABLE_PSVR2_EYE_TRACKING
+            return callerModule == GetModuleHandleA("driver_playstation_vr2.dll");
+#elif ENABLE_PIMAX_EYE_TRACKING
             return callerModule == GetModuleHandleA("driver_aapvr.dll");
+#endif
         }
         return false;
     }
