@@ -46,12 +46,25 @@ namespace {
     // The HmdShimDriver driver wraps another ITrackedDeviceServerDriver instance with the intent to override
     // properties and behaviors.
     struct HmdShimDriver : public vr::ITrackedDeviceServerDriver {
+
+#if ENABLE_PIMAX_EYE_TRACKING
         HmdShimDriver(vr::ITrackedDeviceServerDriver* shimmedDevice, pvrEnvHandle pvr, pvrSessionHandle pvrSession)
             : m_shimmedDevice(shimmedDevice), m_pvr(pvr), m_pvrSession(pvrSession) {
             TraceLocalActivity(local);
             TraceLoggingWriteStart(local, "HmdShimDriver_Ctor");
             TraceLoggingWriteStop(local, "HmdShimDriver_Ctor");
         }
+#endif 
+
+#if ENABLE_PSVR2_EYE_TRACKING
+        HmdShimDriver(vr::ITrackedDeviceServerDriver* shimmedDevice)
+            : m_shimmedDevice(shimmedDevice) 
+        {
+            TraceLocalActivity(local);
+            TraceLoggingWriteStart(local, "HmdShimDriver_Ctor");
+            TraceLoggingWriteStop(local, "HmdShimDriver_Ctor");
+        }
+#endif
 
         vr::EVRInitError Activate(uint32_t unObjectId) override {
             TraceLocalActivity(local);
@@ -148,19 +161,29 @@ namespace {
                     }
                 }
 
+#if ENABLE_PIMAX_EYE_TRACKING
                 pvrEyeTrackingInfo state{};
                 pvrResult result = pvr_getEyeTrackingInfo(m_pvrSession, pvr_getTimeSeconds(m_pvr), &state);
+
+
                 TraceLoggingWriteTagged(local,
                                         "HmdShimDriver_PvrEyeTrackingInfo",
                                         TLArg((int)result, "Result"),
                                         TLArg(state.TimeInSeconds, "TimeInSeconds"));
 
                 const bool isEyeTrackingDataAvailable = result == pvr_success && state.TimeInSeconds > 0;
+#endif 
+
+#if ENABLE_PSVR2_EYE_TRACKING
+                const bool isEyeTrackingDataAvailable = true;
+#endif
+
                 if (isEyeTrackingDataAvailable) {
                     // Not entirely sure what each bit means, but overall this means there is data to pass.
                     data.flag1 = 0x101;
                     data.flag2 = 0x1;
 
+#if ENABLE_PIMAX_EYE_TRACKING
                     TraceLoggingWriteTagged(local,
                                             "HmdShimDriver_PvrEyeTrackingInfo",
                                             TLArg(state.GazeTan[0].x, "LeftGazeTanX"),
@@ -168,9 +191,17 @@ namespace {
                                             TLArg(state.GazeTan[1].x, "RightGazeTanX"),
                                             TLArg(state.GazeTan[1].y, "RightGazeTanY"));
 
+
                     // Compute the gaze pitch/yaw angles by averaging both eyes.
                     const float angleHorizontal = atanf((state.GazeTan[0].x + state.GazeTan[1].x) / 2.f);
                     const float angleVertical = atanf((state.GazeTan[0].y + state.GazeTan[1].y) / 2.f);
+#endif 
+
+#if ENABLE_PSVR2_EYE_TRACKING
+                    // Compute the gaze pitch/yaw angles by averaging both eyes.
+                    const float angleHorizontal = 0.0f;
+                    const float angleVertical = 0.0f;
+#endif
 
                     // Use polar coordinates to create a unit vector.
                     data.vector =
@@ -192,8 +223,14 @@ namespace {
         }
 
         vr::ITrackedDeviceServerDriver* const m_shimmedDevice;
+
+#if ENABLE_PIMAX_EYE_TRACKING
         const pvrEnvHandle m_pvr;
         const pvrSessionHandle m_pvrSession;
+#endif 
+
+#if ENABLE_PSVR2_EYE_TRACKING
+#endif
 
         vr::TrackedDeviceIndex_t m_deviceIndex = vr::k_unTrackedDeviceIndexInvalid;
 
@@ -209,10 +246,19 @@ namespace {
 
 namespace driver_shim {
 
+#if ENABLE_PIMAX_EYE_TRACKING
     vr::ITrackedDeviceServerDriver* CreateHmdShimDriver(vr::ITrackedDeviceServerDriver* shimmedDriver,
                                                         pvrEnvHandle pvr,
                                                         pvrSessionHandle pvrSession) {
         return new HmdShimDriver(shimmedDriver, pvr, pvrSession);
     }
+#endif
+
+#if ENABLE_PSVR2_EYE_TRACKING
+    vr::ITrackedDeviceServerDriver* CreateHmdShimDriver(vr::ITrackedDeviceServerDriver* shimmedDriver) 
+    {
+        return new HmdShimDriver(shimmedDriver);
+    }
+#endif
 
 } // namespace driver_shim

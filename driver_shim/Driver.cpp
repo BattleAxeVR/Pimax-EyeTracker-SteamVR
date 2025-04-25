@@ -56,6 +56,7 @@ namespace {
             if (!m_isLoaded) {
                 bool loadDriver = false;
                 try {
+#if ENABLE_PIMAX_EYE_TRACKING
                     pvrResult result = pvr_initialise(&m_pvr);
                     if (result != pvr_success) {
                         TraceLoggingWriteTagged(local, "Driver_Init_PvrInitError", TLArg((int)result, "Error"));
@@ -84,6 +85,11 @@ namespace {
                         DriverLog("Pimax Headset Product 0x%04x is not compatible", info.ProductId);
                         throw EyeTrackerNotSupportedException();
                     }
+#endif 
+
+#if ENABLE_PSVR2_EYE_TRACKING
+
+#endif
 
                     loadDriver = true;
                 } catch (EyeTrackerNotSupportedException&) {
@@ -91,7 +97,15 @@ namespace {
 
                 if (loadDriver) {
                     DriverLog("Installing IVRServerDriverHost::TrackedDeviceAdded hook");
+
+#if ENABLE_PIMAX_EYE_TRACKING
                     InstallShimDriverHook(m_pvr, m_pvrSession);
+#endif 
+
+#if ENABLE_PSVR2_EYE_TRACKING
+                    InstallShimDriverHook();
+#endif
+
                     m_isLoaded = true;
                 }
             }
@@ -104,8 +118,14 @@ namespace {
         void Cleanup() override {
             VR_CLEANUP_SERVER_DRIVER_CONTEXT();
 
+#if ENABLE_PIMAX_EYE_TRACKING
             pvr_destroySession(m_pvrSession);
             pvr_shutdown(m_pvr);
+#endif 
+
+#if ENABLE_PSVR2_EYE_TRACKING
+
+#endif
         }
 
         const char* const* GetInterfaceVersions() override {
@@ -123,8 +143,15 @@ namespace {
         void LeaveStandby() override {};
 
         bool m_isLoaded = false;
+
+#if ENABLE_PIMAX_EYE_TRACKING
         pvrEnvHandle m_pvr = nullptr;
         pvrSessionHandle m_pvrSession = nullptr;
+#endif
+
+#if ENABLE_PSVR2_EYE_TRACKING
+
+#endif
     };
 } // namespace
 

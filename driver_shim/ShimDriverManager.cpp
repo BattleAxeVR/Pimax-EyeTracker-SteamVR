@@ -29,8 +29,13 @@
 namespace {
     using namespace driver_shim;
 
+#if ENABLE_PIMAX_EYE_TRACKING
     pvrEnvHandle g_pvr = nullptr;
     pvrSessionHandle g_pvrSession = nullptr;
+#endif 
+
+#if ENABLE_PSVR2_EYE_TRACKING
+#endif
 
     DEFINE_DETOUR_FUNCTION(bool,
                            IVRServerDriverHost_TrackedDeviceAdded,
@@ -51,7 +56,14 @@ namespace {
             TraceLoggingWriteTagged(local, "IVRServerDriverHost_TrackedDeviceAdded", TLArg(true, "IsTargetDriver"));
             if (eDeviceClass == vr::TrackedDeviceClass_HMD) {
                 DriverLog("Shimming new TrackedDeviceClass_HMD with HmdShimDriver");
+
+#if ENABLE_PIMAX_EYE_TRACKING
                 shimmedDriver = CreateHmdShimDriver(pDriver, g_pvr, g_pvrSession);
+#endif 
+
+#if ENABLE_PSVR2_EYE_TRACKING
+                shimmedDriver = CreateHmdShimDriver(pDriver);
+#endif 
             }
         }
 
@@ -67,6 +79,7 @@ namespace {
 
 namespace driver_shim {
 
+#if ENABLE_PIMAX_EYE_TRACKING
     void InstallShimDriverHook(pvrEnvHandle pvr, pvrSessionHandle pvrSession) {
         TraceLocalActivity(local);
         TraceLoggingWriteStart(local, "InstallShimDriverHook");
@@ -87,6 +100,28 @@ namespace driver_shim {
 
         TraceLoggingWriteStop(local, "InstallShimDriverHook");
     }
+#endif 
+
+#if ENABLE_PSVR2_EYE_TRACKING
+    void InstallShimDriverHook() 
+    {
+        TraceLocalActivity(local);
+        TraceLoggingWriteStart(local, "InstallShimDriverHook");
+
+        DriverLog("Installing IVRServerDriverHost::TrackedDeviceAdded hook");
+
+        // TODO: Consider hooking all flavors, though I doubt the driver_aapvr will change anytime soon.
+        vr::EVRInitError eError;
+        DetourMethodAttach(
+            // driver_aapvr uses the 006 flavor.
+            vr::VRDriverContext()->GetGenericInterface("IVRServerDriverHost_006", &eError),
+            0 /* TrackedDeviceAdded() */,
+            hooked_IVRServerDriverHost_TrackedDeviceAdded,
+            original_IVRServerDriverHost_TrackedDeviceAdded);
+
+        TraceLoggingWriteStop(local, "InstallShimDriverHook");
+    }
+#endif 
 
     bool IsTargetDriver(void* returnAddress) {
         HMODULE callerModule;

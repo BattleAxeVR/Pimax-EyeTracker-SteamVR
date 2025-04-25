@@ -28,11 +28,19 @@
 
 namespace driver_shim {
 
+#if ENABLE_PIMAX_EYE_TRACKING
     void InstallShimDriverHook(pvrEnvHandle pvr, pvrSessionHandle pvrSession);
-    bool IsTargetDriver(void* returnAddress);
 
     vr::ITrackedDeviceServerDriver* CreateHmdShimDriver(vr::ITrackedDeviceServerDriver* shimmedDriver,
-                                                        pvrEnvHandle pvr,
-                                                        pvrSessionHandle pvrSession);
+                                                    pvrEnvHandle pvr,
+                                                    pvrSessionHandle pvrSession);
+#endif 
+
+#if ENABLE_PSVR2_EYE_TRACKING
+    void InstallShimDriverHook();
+    vr::ITrackedDeviceServerDriver* CreateHmdShimDriver(vr::ITrackedDeviceServerDriver* shimmedDriver);
+#endif 
+
+    bool IsTargetDriver(void* returnAddress);
 
 } // namespace driver_shim
