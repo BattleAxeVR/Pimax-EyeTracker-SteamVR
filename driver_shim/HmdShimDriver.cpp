@@ -198,10 +198,9 @@ namespace {
 #endif 
 
 #if ENABLE_PSVR2_EYE_TRACKING
-                    // Compute the gaze pitch/yaw angles by averaging both eyes.
-                    const float angleHorizontal = 0.0f;
-                    const float angleVertical = 0.0f;
-#endif
+                    data.vector = DirectX::XMVectorSet(0, 0, -1, 1);
+#else
+
 
                     // Use polar coordinates to create a unit vector.
                     data.vector =
@@ -209,6 +208,7 @@ namespace {
                                                                          sinf(angleVertical),
                                                                          -cosf(angleHorizontal) * cosf(angleVertical),
                                                                          1));
+#endif
                 } else {
                     data.flag1 = 0;
                     data.flag2 = 0;

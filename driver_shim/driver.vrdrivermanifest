@@ -1,9 +1,8 @@
 {
 	"alwaysActivate": true,
-	"name" : "aapvr_shim",
+	"name": "battleaxevr_shim",
 
-	"hmd_presence" :
-	[
+	"hmd_presence": [
 		"*.*"
 	]
 }
