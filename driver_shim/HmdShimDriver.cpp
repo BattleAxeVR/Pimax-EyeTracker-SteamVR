@@ -33,10 +33,6 @@
 namespace {
     using namespace driver_shim;
 
-#if ENABLE_PSVR2_EYE_TRACKING
-    BVR::PSVR2EyeTracker psvr2_eye_tracker_;
-#endif
-
     // These are the undocumented definitions for IVRDriverInput_Latest.
     struct VREyeTrackingData_t {
         uint16_t flag1;
@@ -232,6 +228,7 @@ namespace {
 #endif 
 
 #if ENABLE_PSVR2_EYE_TRACKING
+		BVR::PSVR2EyeTracker psvr2_eye_tracker_;
 #endif
 
         vr::TrackedDeviceIndex_t m_deviceIndex = vr::k_unTrackedDeviceIndexInvalid;
