@@ -26,8 +26,16 @@
 #include "DetourUtils.h"
 #include "Tracing.h"
 
+#if ENABLE_PSVR2_EYE_TRACKING
+#include "psvr2_eye_tracking.h"
+#endif
+
 namespace {
     using namespace driver_shim;
+
+#if ENABLE_PSVR2_EYE_TRACKING
+    BVR::PSVR2EyeTracker psvr2_eye_tracker_;
+#endif
 
     // These are the undocumented definitions for IVRDriverInput_Latest.
     struct VREyeTrackingData_t {
@@ -175,7 +183,7 @@ namespace {
 #endif 
 
 #if ENABLE_PSVR2_EYE_TRACKING
-                const bool isEyeTrackingDataAvailable = true;
+                const bool isEyeTrackingDataAvailable = psvr2_eye_tracker_.get_combined_gaze(data.vector);
 #endif
 
                 if (isEyeTrackingDataAvailable) {
@@ -195,12 +203,6 @@ namespace {
                     // Compute the gaze pitch/yaw angles by averaging both eyes.
                     const float angleHorizontal = atanf((state.GazeTan[0].x + state.GazeTan[1].x) / 2.f);
                     const float angleVertical = atanf((state.GazeTan[0].y + state.GazeTan[1].y) / 2.f);
-#endif 
-
-#if ENABLE_PSVR2_EYE_TRACKING
-                    data.vector = DirectX::XMVectorSet(0, 0, -1, 1);
-#else
-
 
                     // Use polar coordinates to create a unit vector.
                     data.vector =

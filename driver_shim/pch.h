@@ -40,11 +40,6 @@
 #define ENABLE_PSVR2_EYE_TRACKING 1
 #define ENABLE_PIMAX_EYE_TRACKING (!ENABLE_PSVR2_EYE_TRACKING && 1)
 
-#if ENABLE_PSVR2_EYE_TRACKING
-//#include "ipc_client.h"
-//#include "psvr2_gazes.h"
-#endif
-
 #if ENABLE_PIMAX_EYE_TRACKING
 #include <PVR.h>
 #include <PVR_API.h>
