@@ -179,7 +179,13 @@ namespace {
 #endif 
 
 #if ENABLE_PSVR2_EYE_TRACKING
+#if ENABLE_DUMMY_ET_GAZES
+                const bool isEyeTrackingDataAvailable = true;
+                data.vector = DirectX::XMVectorSet(0, 0, -1, 1);
+#else
                 const bool isEyeTrackingDataAvailable = psvr2_eye_tracker_.get_combined_gaze(data.vector);
+#endif
+
 #endif
 
                 if (isEyeTrackingDataAvailable) {

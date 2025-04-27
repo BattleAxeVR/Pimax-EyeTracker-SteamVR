@@ -130,7 +130,9 @@ namespace driver_shim {
                                &callerModule)) {
 
 #if ENABLE_PSVR2_EYE_TRACKING
-            return callerModule == GetModuleHandleA("driver_playstation_vr2.dll");
+            const bool is_basic_psvr2_dll = (callerModule == GetModuleHandleA("driver_playstation_vr2.dll"));
+            const bool is_orig_psvr2_dll = (callerModule == GetModuleHandleA("driver_playstation_vr2_orig.dll"));
+            return (is_basic_psvr2_dll || is_orig_psvr2_dll);
 #elif ENABLE_PIMAX_EYE_TRACKING
             return callerModule == GetModuleHandleA("driver_aapvr.dll");
 #endif

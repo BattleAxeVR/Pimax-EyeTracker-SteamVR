@@ -37,20 +37,31 @@
 
 namespace BVR 
 {
-    class PSVR2EyeTracker 
+    const int LEFT = 0;
+    const int RIGHT = 1;
+    const int NUM_EYES = 2;
+
+    class PSVR2EyeTracker
     {
-      public:
+    public:
         PSVR2EyeTracker();
 
         bool connect();
         void disconnect();
         bool are_gazes_available() const;
+        bool update_gazes();
         bool get_combined_gaze(DirectX::XMVECTOR& gaze_vector);
         bool get_per_eye_gaze(const int eye, DirectX::XMVECTOR& gaze_vector);
 
-      private:
+    private:
         IPCClient ipc_client_;
         bool is_connected_ = false;
+
+        DirectX::XMVECTOR valid_combined_gaze_vector_ = DirectX::XMVectorSet(0, 0, -1, 1);
+        bool previous_combined_gaze_valid_ = false;
+
+        DirectX::XMVECTOR valid_per_eye_gaze_vectors_[NUM_EYES] = { DirectX::XMVectorSet(0, 0, -1, 1), DirectX::XMVectorSet(0, 0, -1, 1) };
+        bool previous_per_eye_gazes_valid_[NUM_EYES] = { false, false };
     };
 
 }

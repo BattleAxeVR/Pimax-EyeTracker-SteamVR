@@ -84,33 +84,61 @@ bool PSVR2EyeTracker::are_gazes_available() const
 #endif
 }
 
-bool PSVR2EyeTracker::get_combined_gaze(DirectX::XMVECTOR& gaze_vector) 
+bool PSVR2EyeTracker::update_gazes()
 {
-    connect();
+	connect();
 
-    if (!is_connected_) 
+	if(!is_connected_)
+	{
+		return false;
+	}
+
+	ipc::Request_t request_gaze_packet(ipc::RequestUpdateGazeState);
+	ipc::Response_t response = ipc_client_.SendBlocking(request_gaze_packet);
+
+	if(response.type == ipc::ResponseSuccess)
+	{
+		Psvr2GazeState_t* pLocalGazeState = (Psvr2GazeState_t*)&response.gazeState;
+
+		if(pLocalGazeState)
+		{
+			const GazeCombined_t& combined_gaze = pLocalGazeState->packetData.combined;
+
+			if(combined_gaze.bIsValid && combined_gaze.bNormalisedGazeValid)
+			{
+				valid_combined_gaze_vector_ = DirectX::XMVectorSet(combined_gaze.vNormalisedGaze.x, combined_gaze.vNormalisedGaze.x, combined_gaze.vNormalisedGaze.x, 1);
+				previous_combined_gaze_valid_ = true;
+			}
+
+			const EyeGaze_t& left_gaze = pLocalGazeState->packetData.left;
+
+			if(left_gaze.bGazeDirectionValid)// !per_eye_gaze.blink)
+			{
+				valid_per_eye_gaze_vectors_[LEFT] = DirectX::XMVectorSet(left_gaze.vGazeDirection.x, left_gaze.vGazeDirection.x, left_gaze.vGazeDirection.x, 1);
+				previous_per_eye_gazes_valid_[LEFT] = true;
+			}
+
+			const EyeGaze_t& right_gaze = pLocalGazeState->packetData.right;
+
+			if(right_gaze.bGazeDirectionValid)// !per_eye_gaze.blink)
+			{
+				valid_per_eye_gaze_vectors_[RIGHT] = DirectX::XMVectorSet(right_gaze.vGazeDirection.x, right_gaze.vGazeDirection.x, right_gaze.vGazeDirection.x, 1);
+				previous_per_eye_gazes_valid_[RIGHT] = true;
+			}
+		}
+	}
+
+    return false;
+}
+
+bool PSVR2EyeTracker::get_combined_gaze(DirectX::XMVECTOR& combined_gaze_vector) 
+{
+    update_gazes();
+
+    if (previous_combined_gaze_valid_)
     {
-        return false;
-    }
-
-    ipc::Request_t request_gaze_packet(ipc::RequestUpdateGazeState);
-    ipc::Response_t response = ipc_client_.SendBlocking(request_gaze_packet);
-
-    if (response.type == ipc::ResponseSuccess) 
-    {
-        Psvr2GazeState_t* pLocalGazeState = (Psvr2GazeState_t*)&response.gazeState;
-
-        if (pLocalGazeState) 
-        {
-            const GazeCombined_t& combined_gaze = pLocalGazeState->packetData.combined;
-
-            if (combined_gaze.bIsValid && combined_gaze.bNormalisedGazeValid)
-            {
-                gaze_vector = DirectX::XMVectorSet(combined_gaze.vNormalisedGaze.x, combined_gaze.vNormalisedGaze.x, combined_gaze.vNormalisedGaze.x, 1);
-				return true;
-            }
-            
-        }
+		combined_gaze_vector = valid_combined_gaze_vector_;
+		return true;
     }
 
     return false;
@@ -118,31 +146,16 @@ bool PSVR2EyeTracker::get_combined_gaze(DirectX::XMVECTOR& gaze_vector)
 
 bool PSVR2EyeTracker::get_per_eye_gaze(const int eye, DirectX::XMVECTOR& gaze_vector) 
 {
-    connect();
-
-    if (!is_connected_) 
+    if (eye == LEFT)
     {
-        return false;
+        update_gazes();
     }
 
-    ipc::Request_t request_gaze_packet(ipc::RequestUpdateGazeState);
-    ipc::Response_t response = ipc_client_.SendBlocking(request_gaze_packet);
-
-    if (response.type == ipc::ResponseSuccess) 
-    {
-        Psvr2GazeState_t* pLocalGazeState = (Psvr2GazeState_t*)&response.gazeState;
-
-        if (pLocalGazeState) 
-        {
-            const EyeGaze_t& per_eye_gaze = (eye == 0) ? pLocalGazeState->packetData.left : pLocalGazeState->packetData.right;
-
-            if (per_eye_gaze.bGazeDirectionValid)// !per_eye_gaze.blink)
-            {
-				gaze_vector = DirectX::XMVectorSet(per_eye_gaze.vGazeDirection.x, per_eye_gaze.vGazeDirection.x, per_eye_gaze.vGazeDirection.x, 1);
-				return true;
-            }
-        }
-    }
+	if(previous_per_eye_gazes_valid_[eye])
+	{
+		gaze_vector = valid_per_eye_gaze_vectors_[eye];
+		return true;
+	}
 
     return false;
 }
